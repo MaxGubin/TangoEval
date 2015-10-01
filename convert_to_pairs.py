@@ -34,8 +34,10 @@ def randomArrayElement(array_in):
     return array_in[random.randint(0, len(array_in) - 1)]
 
 
-def processFileInt(infile_name, outfile_name, max_lines,  sampleOutputer):
-    outfile = open(outfile_name, "w")
+def processFileInt(infile_name, outfile_train_name, outfile_test_name,
+        split_ratio,  max_lines,  sampleOutputer):
+    outfile_train = open(outfile_train_name, "w")
+    outfile_test = open(outfile_test_name, "w")
     for k,g in groupby(stringReader(infile_name, max_lines), lambda x: x[1]):
         positive_samples, negative_samples = [],[]
         for r in g:
@@ -45,18 +47,27 @@ def processFileInt(infile_name, outfile_name, max_lines,  sampleOutputer):
                 negative_samples.append(r)
         if not positive_samples or not negative_samples:
             continue
+        outfile = outfile_test if random.random() < split_ratio else outfile_train
+        used_pairs = set()
         # sampling starts
         for i in range(len(positive_samples)+len(negative_samples)):
-            positive_sample = randomArrayElement(positive_samples)
-            negative_sample = randomArrayElement(negative_samples)
-            if random.random() > 0.5:
-                sampleOutputer(outfile, '1', positive_sample[3:], negative_sample[3:])
-            else:
-                sampleOutputer(outfile, '0', negative_sample[3:], positive_sample[3:])
-    outfile.close()
+            positive_index = random.randint(0, len(positive_samples) - 1)
+            negative_index = random.randint(0, len(negative_samples) - 1)
+            if (positive_index, negative_index) not in used_pairs:
+                used_pairs.add((positive_index, negative_index))
+                positive_sample = randomArrayElement(positive_samples)
+                negative_sample = randomArrayElement(negative_samples)
+                if random.random() > 0.5:
+                    sampleOutputer(outfile, '1', positive_sample[3:], negative_sample[3:])
+                else:
+                    sampleOutputer(outfile, '0', negative_sample[3:], positive_sample[3:])
+    outfile_train.close()
+    outfile_test.close()
 
-def processFileConcatFeatures(infile_name, outfile_name, max_lines):
-    processFileInt(infile_name, outfile_name, max_lines, outputSampleConcat)
+def processFileConcatFeatures(infile_name, outfile_train_name, 
+        outfile_test_name, split_ratio, max_lines):
+    processFileInt(infile_name, outfile_train_name, outfile_test_name,
+            split_ratio, max_lines, outputSampleConcat)
 
 
 def processFileDiffFeatures(infile_name, outfile_name, max_lines):
@@ -83,3 +94,5 @@ def LoadPairsDiffDataset(name, test_size):
     data=bp.read_csv(name, header=None)
     return train_test_split(data[range(1,29)].values, data[0].values,
             test_size=test_size)
+
+

@@ -18,6 +18,53 @@ def LoadDataset(name, test_size):
     return train_test_split(data[range(3,31)].values, data[0].values,
             test_size=test_size)
 
+# Names of columns in dataformats from 09/26.
+cvs_names_0926 = ["label", "user_actid", "cand_actid", "same_country",
+        "same_locale", "gender_mm", "gender_mf", "gender_mu", "gender_fm",
+        "gender_ff", "gender_fu", "gender_um", "gender_uf", "gender_uu",
+        "gender_m", "gender_f", "gender_u", "picture_daily",
+        "update_profile_daily", "wink_daily", "picture_30days",
+        "num_face","age", "beauty", "bright", "sharp", "white", "indian",
+        "asian", "distance", "fav_ratio", "swipe_source", "user_tango_age",
+        "cand_tango_age", "user_fav_ratio", "cand_user_agediff"]
+
+# Names of features
+feature_names_0926 = ["same_country",
+        "same_locale", "gender_mm", "gender_mf", "gender_mu", "gender_fm",
+        "gender_ff", "gender_fu", "gender_um", "gender_uf", "gender_uu",
+        "gender_m", "gender_f", "gender_u", "picture_daily",
+        "update_profile_daily", "wink_daily", "picture_30days",
+        "num_face","age", "beauty", "bright", "sharp", "white", "indian",
+        "asian", "distance", "fav_ratio", "swipe_source", "user_tango_age",
+        "cand_tango_age", "user_fav_ratio", "cand_user_agediff"]
+label_names_0926 = ["label"]
+
+def LoadDataset_0926(name, test_sample, 
+                        feature_columns=feature_names_0926,
+                        label_columns=label_names_0926):
+    """ Loads data in the new format with more fields and 
+    """
+    swipeSourceDict = {"POPULAR": 0.0,
+            "GEO": 1.0, "ONLINENOW": 2.0, "ICF": 3.0, "RSM": 4.0, "PUK": 5.0}
+    def swipeSourceConverter(source):
+        if source not in swipeSourceDict:
+            print "Unknown source:", source
+        return swipeSourceDict.get(source)
+    data = bp.read_csv(name, header = None,
+            names = cvs_names_0926, converters = {
+                "swipe_source": swipeSourceConverter 
+                })
+
+    # Sample based on the viewer id.
+    set_of_users = set(data["user_actid"])
+    test_user_ids = set(np.random.choice(np.array([i for i in set_of_users]),
+        int(len(set_of_users)*test_sample)))
+    data["test"] = data["user_actid"].map(lambda x: x in test_user_ids)
+    return (data[data["test"]==False][feature_columns].values,
+            data[data["test"]==True][feature_columns].values,
+            data[data["test"]==False][label_columns].values.ravel(),
+            data[data["test"]==True][label_columns].values.ravel())
+
 # Wrapper to present tables
 class ListTable(list):
     """ Overridden list class which takes a 2-dimensional list of 
