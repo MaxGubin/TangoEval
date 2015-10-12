@@ -65,6 +65,43 @@ def LoadDataset_0926(name, test_sample,
             data[data["test"]==False][label_columns].values.ravel(),
             data[data["test"]==True][label_columns].values.ravel())
 
+#Named of columns in dataformats from 10/03
+
+cvs_names_1003 = ["flabel", "user_actid", "cand_actid", "same_country",
+                  "same_locale", "gender_mm", "gender_mf",
+                  "gender_mu","gender_fm", "gender_ff", "gender_fu",
+                  "gender_um", "gender_uf", "gender_uu", "gender_m", "gender_f",
+                  "gender_u", "picture_daily", "update_profile_daily", 
+                  "wink_daily", "picture_30days", "num_face", "age", "beauty",
+                  "bright", "sharp", "white", "indian", "asian", "distance",
+                  "fav_ratio", "vpplabel", "label"]
+feature_names_1003 = [ "same_country",
+                  "same_locale", "gender_mm", "gender_mf",
+                  "gender_mu","gender_fm", "gender_ff", "gender_fu",
+                  "gender_um", "gender_uf", "gender_uu", "gender_m", "gender_f",
+                  "gender_u", "picture_daily", "update_profile_daily", 
+                  "wink_daily", "picture_30days", "num_face", "age", "beauty",
+                  "bright", "sharp", "white", "indian", "asian", "distance",
+                  "fav_ratio"]
+
+def LoadDataset_1003(name, test_sample):
+    """ Loads data in the new format with more fields and 
+    """
+    data = bp.read_csv(name, header = None,
+            names = cvs_names_1003)
+    set_of_users = set(data["user_actid"])
+    test_user_ids = set(np.random.choice(np.array([i for i in set_of_users]),
+        int(len(set_of_users)*test_sample)))
+    data["test"] = data["user_actid"].map(lambda x: x in test_user_ids)
+    #data["res_label"] = data[["flabel", "vpplabel"]].apply(lambda x: 1 if x[0]
+    #        else (2 if x[1] else 0),axis=1)
+    return (data[data["test"]==False][feature_names_1003].values,
+            data[data["test"]==True][feature_names_1003].values,
+            data[data["test"]==False][["flabel","vpplabel"]].values,
+            data[data["test"]==True][["flabel", "vpplabel"]].values)
+
+
+
 # Wrapper to present tables
 class ListTable(list):
     """ Overridden list class which takes a 2-dimensional list of 
